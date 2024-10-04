@@ -1,17 +1,32 @@
 package com.ratelimiter.config;
 
 import com.moandjiezana.toml.Toml;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Optional;
 
+@Slf4j
 public class ConfigLoader {
 
     private ConfigLoader() {}
 
-    private static final Toml config;
+    private static Toml config;
 
     static {
-        config = new Toml().read(new File("src/main/resources/config.toml"));
+        loadConfig();
+    }
+
+    private static void loadConfig() {
+        try (var reader = Optional.ofNullable(Thread.currentThread().getContextClassLoader().getResourceAsStream("config.toml"))
+                .map(InputStreamReader::new)
+                .orElseThrow(() -> new IOException("config.toml not found in classpath"))) {
+            config = new Toml().read(reader);
+        } catch (IOException e) {
+            log.error("Error loading config.toml", e);
+            config = new Toml();
+        }
     }
 
     public static String getDatabaseUrl() {

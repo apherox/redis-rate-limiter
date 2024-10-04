@@ -19,7 +19,7 @@ public class JedisConfig {
         poolConfig.setTestWhileIdle(true);
 
         // Initialize the Jedis pool with Redis server details
-        jedisPool = new JedisPool(poolConfig, ConfigLoader.getRedisHost(), ConfigLoader.getRedisPort()); // Use your Redis server's details here
+        jedisPool = new JedisPool(poolConfig, ConfigLoader.getRedisHost(), ConfigLoader.getRedisPort());
     }
 
     private JedisConfig() {}

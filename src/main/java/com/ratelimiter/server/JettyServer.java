@@ -5,8 +5,11 @@ import com.ratelimiter.filters.LoggingFilter;
 import com.ratelimiter.handlers.*;
 import jakarta.servlet.DispatcherType;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -18,6 +21,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.util.EnumSet;
 
+@Slf4j
 public class JettyServer {
 
     @Getter
@@ -35,12 +39,28 @@ public class JettyServer {
         addFilters(context);
         addHandlers(context);
 
+        configureAndStartServer(context, port);
+    }
+
+    private static void configureAndStartServer(ServletContextHandler context, int port) throws Exception {
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] { context, new DefaultHandler()});
 
         Server server = new Server(port);
         server.setHandler(handlers);
         server.setErrorHandler(new GlobalExceptionHandler());
+
+        // Register a shutdown hook to stop the server
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("Stopping Jetty server...");
+                server.stop();
+                server.join();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }));
+
         server.start();
         server.join();
     }
